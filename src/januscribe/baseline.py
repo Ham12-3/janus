@@ -70,6 +70,36 @@ class Tier0Strategy:
 
 
 @dataclass
+class Tier2Strategy:
+    """Scene text plus the learned soft token, at the subject's seed.
+
+    Deliberately does NOT include the canonical description: the whole claim of
+    M3 is that one learned vector carries the subject's identity, so leaving the
+    prose in would make the comparison against Tier 0 meaningless. Set
+    ``with_canonical=True`` to ablate that.
+
+    The soft token must already be installed via
+    ``inversion.apply_soft_token``; this only builds the prompt.
+    """
+
+    name: str = "tier2"
+    with_canonical: bool = False
+
+    def prompt(self, subject: Subject, scene: str) -> str:
+        from januscribe.inversion import token_for
+
+        token = token_for(subject.id)
+        if self.with_canonical:
+            return f"{scene}. {token}, {subject.canonical_description}"
+        return f"{scene}. {token}"
+
+    def seed(self, subject: Subject, index: int) -> int:
+        # Same seeds as Tier 0, so a difference in score is a difference in
+        # strategy rather than a difference in sampling noise.
+        return subject.scene_seed(index)
+
+
+@dataclass
 class BaselineResult:
     """Everything a run produced, ready to be written out."""
 

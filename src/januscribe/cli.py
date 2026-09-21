@@ -277,6 +277,58 @@ def baseline(
 
 
 @app.command()
+def learn(
+    subject_id: Annotated[str, typer.Option("--subject", help="Subject id from the registry.")],
+    images: Annotated[
+        Optional[str],
+        typer.Option("--images", help="Glob of reference images; defaults to the subject sheet."),
+    ] = None,
+    registry: Annotated[Path, typer.Option("--registry", exists=True)] = Path(
+        "configs/subjects.yaml"
+    ),
+    steps: Annotated[int, typer.Option("--steps")] = 500,
+    lr: Annotated[float, typer.Option("--lr")] = 1e-3,
+    batch_size: Annotated[int, typer.Option("--batch", help="Effective batch via grad accum.")] = 4,
+    out: Annotated[Path, typer.Option("--out")] = Path("tokens"),
+    seed: Annotated[int, typer.Option("--seed")] = 42,
+) -> None:
+    """Learn a soft token for a subject. `januscribe learn --subject fox`
+
+    With no --images, uses the subject's reference sheet. The learned token is
+    written as a small .safetensors file and is usable in any prompt afterwards.
+    """
+    import glob as globmod
+
+    from januscribe.inversion import InversionConfig, train_soft_token
+    from januscribe.subjects import SubjectRegistry
+
+    bundle = _bundle()
+    reg = SubjectRegistry.from_yaml(registry)
+    subject = reg.get(subject_id)
+
+    paths = (
+        [Path(p) for p in sorted(globmod.glob(images))]
+        if images
+        else subject.reference_paths(reg.root)
+    )
+    if not paths:
+        raise typer.BadParameter(
+            f"no reference images for {subject_id!r}; run `januscribe build-refs` first"
+        )
+
+    cfg = InversionConfig(steps=steps, lr=lr, batch_size=batch_size, seed=seed)
+    result = train_soft_token(bundle, subject, paths, cfg=cfg)
+    path = result.soft_token.save(Path(out) / f"{subject_id}.safetensors")
+
+    typer.echo(str(path))
+    typer.echo(
+        f"token {result.soft_token.token}  "
+        f"loss {result.first_loss:.4f} -> {result.final_loss:.4f}  "
+        f"{result.seconds:.0f}s"
+    )
+
+
+@app.command()
 def repl() -> None:
     """Load the model once, then run many commands against it.
 
