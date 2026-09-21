@@ -1,0 +1,21 @@
+# Default JanusScribe settings. Override with --config, env (JANUSCRIBE_*) or flags.
+model_id: deepseek-ai/Janus-Pro-1B   # production: deepseek-ai/Janus-Pro-7B
+device: auto                          # auto | cuda | mps | cpu
+dtype: auto                           # auto -> bf16 on cuda, fp16 on mps, fp32 on cpu
+vq_dtype: float32                     # VQ tokenizer is small; fp32 keeps roundtrip honest
+attn_implementation: auto             # auto -> flash_attention_2 if usable, else sdpa
+seed: 42
+output_dir: outputs
+
+generation:
+  cfg_weight: 5.0
+  temperature: 1.0
+  parallel_size: 1
+  image_token_num_per_image: 576
+  img_size: 384
+  patch_size: 16
+
+understand:
+  max_new_tokens: 512
+  temperature: 0.0    # greedy, so rubric scoring is stable across runs
+  top_p: 0.95

@@ -1,0 +1,224 @@
+"""JanusScribe command line interface.
+
+Every command shares one ``Settings`` object built from (in increasing
+precedence) defaults, an optional YAML config, environment variables, and
+flags. The model is loaded through ``model.get_bundle``, so ``repl`` can run
+many commands against a single load -- which is the point, given how long a 7B
+load takes.
+"""
+
+from __future__ import annotations
+
+import json
+import shlex
+from pathlib import Path
+from typing import Annotated, Optional, get_args
+
+import typer
+
+from januscribe.config import DeviceName, DTypeName, Settings
+
+# config.py owns the valid values; read them back rather than restating them here.
+_DEVICES: tuple[str, ...] = get_args(DeviceName)
+_DTYPES: tuple[str, ...] = get_args(DTypeName)
+from januscribe.logging import configure_logging, get_logger
+
+app = typer.Typer(
+    name="januscribe",
+    help="Consistent illustrated document generation on DeepSeek Janus-Pro.",
+    no_args_is_help=True,
+    add_completion=False,
+)
+log = get_logger(__name__)
+
+_STATE: dict[str, object] = {}
+
+
+def _settings() -> Settings:
+    settings = _STATE.get("settings")
+    if settings is None:  # command invoked without the group callback (tests)
+        settings = Settings()
+        _STATE["settings"] = settings
+    return settings  # type: ignore[return-value]
+
+
+def _bundle():
+    from januscribe.model import get_bundle
+
+    return get_bundle(_settings())
+
+
+@app.callback()
+def main(
+    config: Annotated[
+        Optional[Path], typer.Option("--config", help="YAML settings file.", exists=True)
+    ] = None,
+    model: Annotated[
+        Optional[str], typer.Option("--model", help="HF model id, e.g. deepseek-ai/Janus-Pro-7B.")
+    ] = None,
+    device: Annotated[
+        Optional[str], typer.Option("--device", help=f"{' | '.join(_DEVICES)}.")
+    ] = None,
+    dtype: Annotated[
+        Optional[str], typer.Option("--dtype", help=f"{' | '.join(_DTYPES)}.")
+    ] = None,
+    log_level: Annotated[str, typer.Option("--log-level")] = "INFO",
+    json_logs: Annotated[bool, typer.Option("--json-logs/--no-json-logs")] = False,
+) -> None:
+    """Build the shared Settings for whichever subcommand runs next.
+
+    Inside ``repl`` this callback runs again for every typed command. It must not
+    rebuild Settings there, or each command would silently revert to defaults and
+    reload the model -- defeating the entire purpose of holding it in memory.
+    """
+    configure_logging(level=log_level, json_logs=json_logs)
+    if _STATE.get("locked"):
+        return
+    overrides: dict[str, object] = {"log_level": log_level}
+    if model:
+        overrides["model_id"] = model
+    if device:
+        if device not in _DEVICES:
+            raise typer.BadParameter(f"unknown device {device!r}; use {'|'.join(_DEVICES)}")
+        overrides["device"] = device
+    if dtype:
+        if dtype not in _DTYPES:
+            raise typer.BadParameter(f"unknown dtype {dtype!r}; use {'|'.join(_DTYPES)}")
+        overrides["dtype"] = dtype
+
+    settings = Settings.from_yaml(config, **overrides) if config else Settings(**overrides)  # type: ignore[arg-type]
+    _STATE["settings"] = settings
+
+
+@app.command()
+def info() -> None:
+    """Load the model and print what actually got loaded."""
+    bundle = _bundle()
+    typer.echo(json.dumps(bundle.describe(), indent=2))
+
+
+@app.command()
+def gen(
+    prompt: Annotated[str, typer.Argument(help="Text prompt.")],
+    seed: Annotated[int, typer.Option("--seed", help="Base seed; image i uses seed+i.")] = 42,
+    n: Annotated[int, typer.Option("--n", "-n", help="Images to sample.")] = 1,
+    cfg_weight: Annotated[float, typer.Option("--cfg", help="Classifier-free guidance.")] = 5.0,
+    temperature: Annotated[float, typer.Option("--temp")] = 1.0,
+    out: Annotated[Path, typer.Option("--out", help="Output directory.")] = Path("outputs/gen"),
+    stem: Annotated[str, typer.Option("--stem", help="Filename prefix.")] = "img",
+    progress_every: Annotated[int, typer.Option("--progress-every")] = 64,
+) -> None:
+    """Text to image. `januscribe gen "a red fox" --seed 42`"""
+    from januscribe.config import GenerationConfig
+    from januscribe.generate import generate_images, save_all
+
+    bundle = _bundle()
+    cfg = GenerationConfig(parallel_size=n, cfg_weight=cfg_weight, temperature=temperature)
+    images = generate_images(bundle, prompt, seed=seed, cfg=cfg, progress_every=progress_every)
+    paths = save_all(images, out, stem=stem)
+
+    sidecar = Path(out) / f"{stem}_seed{seed}.json"
+    sidecar.write_text(
+        json.dumps(
+            {
+                "prompt": prompt,
+                "base_seed": seed,
+                "cfg_weight": cfg_weight,
+                "temperature": temperature,
+                "images": [
+                    {"path": str(p), "seed": g.seed, "tokens": g.tokens.tolist()}
+                    for p, g in zip(paths, images)
+                ],
+                "model": bundle.describe(),
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    for p in paths:
+        typer.echo(str(p))
+    typer.echo(f"metadata: {sidecar}")
+
+
+@app.command()
+def ask(
+    image: Annotated[Path, typer.Argument(exists=True, help="Image to look at.")],
+    question: Annotated[str, typer.Argument(help="Question about the image.")],
+    max_new_tokens: Annotated[int, typer.Option("--max-new-tokens")] = 256,
+    temperature: Annotated[float, typer.Option("--temp", help="0 = greedy.")] = 0.0,
+) -> None:
+    """Image plus question to text. `januscribe ask image.png "what colour is the fox?"`"""
+    from januscribe.config import UnderstandConfig
+    from januscribe.understand import ask as ask_model
+
+    bundle = _bundle()
+    cfg = UnderstandConfig(max_new_tokens=max_new_tokens, temperature=temperature)
+    answer = ask_model(bundle, image, question, cfg=cfg)
+    typer.echo(answer.text)
+
+
+@app.command("vq-roundtrip")
+def vq_roundtrip(
+    image: Annotated[Path, typer.Argument(exists=True)],
+    out: Annotated[Path, typer.Option("--out")] = Path("outputs/vq/roundtrip.png"),
+    save_tokens: Annotated[bool, typer.Option("--save-tokens/--no-save-tokens")] = True,
+) -> None:
+    """Encode an image to 576 VQ tokens, decode it back, save the pair side by side."""
+    from januscribe.vq import roundtrip, save_side_by_side
+
+    bundle = _bundle()
+    result = roundtrip(bundle, image)
+    path = save_side_by_side(result, out)
+    if save_tokens:
+        token_path = Path(out).with_suffix(".tokens.json")
+        token_path.write_text(
+            json.dumps(
+                {
+                    "source": str(image),
+                    "n_tokens": result.n_tokens,
+                    "grid": result.grid,
+                    "psnr_db": result.psnr,
+                    "tokens": result.tokens.tolist(),
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        typer.echo(f"tokens: {token_path}")
+    typer.echo(f"{path}  psnr={result.psnr:.2f} dB  tokens={result.n_tokens}")
+
+
+@app.command()
+def repl() -> None:
+    """Load the model once, then run many commands against it.
+
+    The poor man's daemon. A 7B load costs minutes, so interactive work and
+    ablation sweeps should not pay it per command. Type subcommands exactly as
+    you would on the shell, without the leading `januscribe`.
+    """
+    bundle = _bundle()
+    typer.echo(json.dumps(bundle.describe(), indent=2))
+    typer.echo("model held in memory. commands: gen | ask | vq-roundtrip | info | quit")
+    _STATE["locked"] = True  # keep the settings (and therefore the loaded model) fixed
+    while True:
+        try:
+            line = input("januscribe> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            typer.echo()
+            _STATE.pop("locked", None)
+            return
+        if not line:
+            continue
+        if line in {"quit", "exit", ":q"}:
+            _STATE.pop("locked", None)
+            return
+        try:
+            app(shlex.split(line), standalone_mode=False)
+        except SystemExit:
+            pass
+        except Exception as exc:  # keep the model loaded across mistakes
+            log.error("repl_command_failed", command=line, error=str(exc))
+
+
+if __name__ == "__main__":
+    app()

@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "januscribe"
+version = "0.1.0"
+description = "Consistent illustrated document generation on DeepSeek Janus-Pro"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+
+dependencies = [
+  # --- Janus runtime (versions pinned deliberately, see NOTES-API.md) ---
+  "torch>=2.4,<3",
+  "transformers>=4.38.2,<4.46",
+  "tokenizers<0.21",
+  "timm>=0.9.16",
+  "sentencepiece>=0.2",
+  "accelerate>=0.30",
+  "safetensors>=0.4",
+  "einops>=0.7",
+  "huggingface-hub>=0.24,<1.0",
+  # attrdict is dead on py>=3.10; attrdict3 is the maintained fork. See NOTES-API.md.
+  "attrdict3>=2.0.2",
+  # --- januscribe ---
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "pyyaml>=6.0",
+  "typer>=0.12",
+  "rich>=13.7",
+  "structlog>=24.1",
+  "pillow>=10.3",
+  "numpy>=1.26,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2", "pytest-timeout>=2.3"]
+flash = ["flash-attn>=2.5"]
+
+[project.scripts]
+januscribe = "januscribe.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/januscribe"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "slow: needs model weights on disk and minutes of compute",
+  "gpu: needs a CUDA device",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
