@@ -88,3 +88,20 @@ def test_batched_decode_matches_single(bundle, doge_path) -> None:
     # Rows inside one batch, and the same call repeated, are genuinely bit-exact.
     assert psnr(batched[0], batched[1]) == float("inf")
     assert psnr(single, decode_tokens(bundle, tokens)[0]) == float("inf")
+
+
+def test_encoded_codes_are_usable_by_autograd(bundle, doge_path) -> None:
+    """Codes must be ordinary tensors, not inference tensors.
+
+    M3 teacher-forces on exactly these codes. Produced under
+    torch.inference_mode they are permanently unusable in a backward pass
+    ("Inference tensors cannot be saved for backward") -- and the failure
+    surfaces only once training runs, far from the cause.
+    """
+    codes = encode_image(bundle, load_image_for_vq(doge_path))
+    assert not torch.is_inference(codes)
+
+    # Prove it end to end: a tracked loss against these targets must backward.
+    logits = torch.zeros(codes.numel(), 16384, requires_grad=True)
+    torch.nn.functional.cross_entropy(logits, codes).backward()
+    assert logits.grad is not None

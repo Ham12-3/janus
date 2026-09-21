@@ -66,11 +66,18 @@ def vq_output_to_numpy(dec: torch.Tensor) -> np.ndarray:
     return arr.astype(np.uint8)
 
 
-@torch.inference_mode()
+# NOT torch.inference_mode: these codes are M3's teacher-forcing targets, and
+# autograd refuses to use inference tensors in a tracked computation
+# ("Inference tensors cannot be saved for backward"). inference_mode is slightly
+# faster but its outputs are permanently unusable in training, which is a
+# landmine on a function whose whole purpose is producing training data.
+# torch.no_grad gives the same memory saving with ordinary tensors.
+@torch.no_grad()
 def encode_image(bundle: ModelBundle, img: Image.Image) -> torch.Tensor:
     """Encode one PIL image to its flat VQ code indices.
 
-    Returns int64 tensor of shape [grid*grid] (576 for a 384px image).
+    Returns int64 tensor of shape [grid*grid] (576 for a 384px image). The
+    result is a normal tensor, safe to use as an autograd target.
 
     The underlying call is ``gen_vision_model.encode(x) -> (quant, losses, info)``
     where ``info[2]`` holds the flattened argmin indices. That third element is
