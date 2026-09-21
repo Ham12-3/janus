@@ -1,0 +1,18 @@
+# A short illustrated story. `januscribe build --config configs/fox-story.yaml --out dist`
+#
+# Start with --dry-run to see the plan without generating anything: the template
+# planner needs no model, so it costs nothing.
+
+title: The Fox Who Mapped the Weather
+topic: a fox naturalist recording the weather across one year
+subjects: [fox]
+sections: 4
+planner: template          # template (deterministic, no model) | janus
+strategy: tier0            # tier0 (canonical description) | tier2 (learned soft token)
+stem: fox-story
+debug: true                # render consistency scores beside each image
+
+retry:
+  max_attempts: 2          # each attempt is a full sample plus scoring: ~4 min on CPU
+  metric: rubric
+  rubric_threshold: 0.75

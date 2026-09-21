@@ -329,6 +329,72 @@ def learn(
 
 
 @app.command()
+def build(
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, help="Document build config YAML.")
+    ],
+    out: Annotated[Path, typer.Option("--out")] = Path("dist"),
+    registry: Annotated[Path, typer.Option("--registry", exists=True)] = Path(
+        "configs/subjects.yaml"
+    ),
+    scene_file: Annotated[Path, typer.Option("--scene-file", exists=True)] = Path(
+        "configs/scenes.yaml"
+    ),
+    debug: Annotated[
+        bool, typer.Option("--debug/--no-debug", help="Render consistency scores per image.")
+    ] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Print the plan and stop, generating nothing.")
+    ] = False,
+    force: Annotated[bool, typer.Option("--force/--no-force")] = False,
+) -> None:
+    """Build an illustrated document. `januscribe build --config configs/fox-story.yaml`"""
+    from januscribe.pipeline import build_from_config
+    from januscribe.planner import (
+        build_planner,
+        load_document_config,
+        plan_summary,
+        resolve_subjects,
+    )
+    from januscribe.subjects import SubjectRegistry, load_scenes
+
+    doc_config = load_document_config(config)
+    if debug:
+        doc_config["debug"] = True
+
+    reg = SubjectRegistry.from_yaml(registry)
+    scenes = load_scenes(scene_file)
+
+    if dry_run:
+        # The template planner needs no model, so a dry run costs nothing.
+        planner_name = doc_config.get("planner", "template")
+        if planner_name != "template":
+            typer.echo(f"(dry run uses the template planner, not {planner_name!r})")
+        plan = build_planner("template", None, scenes).plan(
+            topic=doc_config["topic"],
+            subjects=resolve_subjects(reg, doc_config["subjects"]),
+            n_sections=int(doc_config.get("sections", 4)),
+            title=doc_config.get("title"),
+        )
+        typer.echo(plan_summary(plan))
+        return
+
+    bundle = _bundle()
+    document, outputs = build_from_config(
+        bundle, doc_config, reg, scenes, out, _settings(), force=force
+    )
+
+    for kind, path in outputs.items():
+        typer.echo(f"{kind}: {path}" if path else f"{kind}: skipped")
+    if document.n_low_confidence:
+        typer.secho(
+            f"{document.n_low_confidence} of {len(document.sections)} images are "
+            "low confidence and are flagged in the output.",
+            fg=typer.colors.YELLOW,
+        )
+
+
+@app.command()
 def repl() -> None:
     """Load the model once, then run many commands against it.
 

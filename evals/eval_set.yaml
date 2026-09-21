@@ -1,0 +1,33 @@
+# The fixed evaluation set. Never reorder or edit in place -- append only.
+#
+# Every strategy is measured on exactly these (subject, scene, seed) triples, so
+# numbers from different runs and different machines are comparable. Changing
+# this file silently invalidates every previously recorded comparison, which is
+# why it is small, explicit, and versioned rather than derived at run time.
+
+version: 1
+
+subjects: [fox, courier, botanist]
+
+# Indices into configs/scenes.yaml, taken as an ordered prefix so a larger run
+# is a superset of a smaller one.
+scene_indices: [0, 1, 2, 3, 4, 5]
+
+# Seeds come from each subject's scene_seed(index), so every strategy samples
+# from the same seed for the same cell. A score difference is then a difference
+# in strategy, not in sampling noise.
+
+strategies:
+  - tier0        # canonical description in every prompt
+  - tier2        # learned soft token, needs `januscribe learn`
+  - tier3        # LoRA adapters, needs peft and a trained adapter
+  - tier4        # reference sheet in context via the understanding path
+
+retry:
+  max_attempts: 1        # 1 = measure raw strategy quality without the retry loop
+  metric: rubric
+  rubric_threshold: 0.75
+
+generation:
+  cfg_weight: 5.0
+  temperature: 1.0

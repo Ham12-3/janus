@@ -117,14 +117,62 @@ def generate_images(
     )
     tokens = _build_cfg_batch(bundle, input_ids, n)
 
-    generators = [make_generator(seed + i, bundle.device) for i in range(n)]
-    inputs_embeds = bundle.model.language_model.get_input_embeddings()(tokens)
-    generated = torch.zeros((n, n_tokens), dtype=torch.long, device=bundle.device)
+    prefix = bundle.model.language_model.get_input_embeddings()(tokens)
 
     log.info(
         "generation_start", prompt=prompt, seed=seed, parallel_size=n,
         cfg_weight=cfg.cfg_weight, temperature=cfg.temperature, prompt_tokens=int(input_ids.numel()),
     )
+    generated, images, elapsed = sample_from_prefix(
+        bundle, prefix, seed=seed, cfg=cfg, progress_every=progress_every
+    )
+
+    return [
+        GeneratedImage(
+            image=images[i],
+            tokens=generated[i].detach().cpu(),
+            seed=seed + i,
+            prompt=prompt,
+            cfg_weight=cfg.cfg_weight,
+            temperature=cfg.temperature,
+            index=i,
+            meta={
+                "model_id": bundle.settings.model_id,
+                "device": str(bundle.device),
+                "dtype": str(bundle.dtype),
+                "base_seed": seed,
+                "sft_prompt": full_prompt,
+                "seconds_total": round(elapsed, 2),
+            },
+        )
+        for i in range(n)
+    ]
+
+
+@torch.inference_mode()
+def sample_from_prefix(
+    bundle: ModelBundle,
+    prefix: torch.Tensor,
+    seed: int,
+    cfg: GenerationConfig,
+    progress_every: int = 0,
+) -> tuple[torch.Tensor, list[Image.Image], float]:
+    """Run the CFG sampling loop from an arbitrary conditioning prefix.
+
+    ``prefix`` is [2N, T, H] with rows interleaved (cond, uncond, cond, ...).
+    Factored out of ``generate_images`` so alternative conditioning -- notably
+    M4's visual self-conditioning, which prepends reference-image embeddings --
+    samples through exactly the same loop rather than a near-copy that could
+    drift from it.
+
+    Returns (codes [N, n_tokens], images, seconds).
+    """
+    n = cfg.parallel_size
+    n_tokens = cfg.image_token_num_per_image
+    generators = [make_generator(seed + i, bundle.device) for i in range(n)]
+    inputs_embeds = prefix
+    generated = torch.zeros((n, n_tokens), dtype=torch.long, device=bundle.device)
+
     t0 = time.perf_counter()
     past_key_values = new_kv_cache()
 
@@ -161,27 +209,7 @@ def generate_images(
         "generation_done", seconds=round(elapsed, 1),
         seconds_per_image=round(elapsed / max(n, 1), 1), parallel_size=n,
     )
-
-    return [
-        GeneratedImage(
-            image=images[i],
-            tokens=generated[i].detach().cpu(),
-            seed=seed + i,
-            prompt=prompt,
-            cfg_weight=cfg.cfg_weight,
-            temperature=cfg.temperature,
-            index=i,
-            meta={
-                "model_id": bundle.settings.model_id,
-                "device": str(bundle.device),
-                "dtype": str(bundle.dtype),
-                "base_seed": seed,
-                "sft_prompt": full_prompt,
-                "seconds_total": round(elapsed, 2),
-            },
-        )
-        for i in range(n)
-    ]
+    return generated, images, elapsed
 
 
 def _decode_batch(

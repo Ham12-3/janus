@@ -32,11 +32,13 @@ dependencies = [
   "structlog>=24.1",
   "pillow>=10.3",
   "numpy>=1.26,<3",
+  "reportlab>=4.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.2", "pytest-timeout>=2.3"]
 flash = ["flash-attn>=2.5"]
+lora = ["peft>=0.11,<0.14"]
 
 [project.scripts]
 januscribe = "januscribe.cli:app"
