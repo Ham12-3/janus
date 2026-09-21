@@ -144,8 +144,59 @@ project not derived from a model, which is exactly why it can be used to measure
 one. `null` marks a genuinely ambiguous case and is excluded from scoring: an
 honest abstention rather than a free pass.
 
-## Not yet validated
+## Final state: all three subjects validated
 
-`courier` and `botanist` have had the rules applied but have **no reference
-sheets to label against yet**, so their agreement is unmeasured. Their numbers in
-any baseline should be read with that caveat until they get the same treatment.
+| subject | agreement | present | absent |
+|---|---|---|---|
+| `fox` | **29/29 = 1.000** | 24/24 | 5/5 |
+| `courier` | **16/16 = 1.000** | 16/16 | none labelled |
+| `botanist` | **18/18 = 1.000** | 18/18 | none labelled |
+| **overall** | **63/63 = 1.000** | | |
+| negative controls | **17/18 = 0.944** | | |
+
+Three ambiguous rows abstained rather than being forced to a label.
+
+Extending to `courier` and `botanist` found one more attribute of the same kind:
+`round tortoiseshell glasses` was wrong on **all three** botanist images -- a
+third 0/N deterministic failure, this time from a rare compound colour term.
+Rewritten to `round brown glasses`, it scores 3/3.
+
+### Negative controls, and the one that still fails
+
+Tier 0's over-specified prompts reproduce most of what they ask for, so the
+per-subject sheets are almost entirely positive and cannot measure false
+positives. Pairing each image with attributes from a *different* subject fixes
+that for free, since every such label is false by construction.
+
+It paid off immediately. The courier robot, which has no goggles, is judged to
+have **`goggles on top of the head`** -- presumably its round glowing lens reads
+as goggles. That attribute is live in the fox rubric, so:
+
+> **Known bias.** The fox's goggle score may be slightly inflated, because the
+> judge will answer yes to goggle-shaped things that are not goggles. It is one
+> failure in eighteen, above the 0.90 bar, but it is a directional bias rather
+> than noise and should be remembered when reading fox numbers.
+
+### Two bugs found in the validator itself
+
+Both were the failure this eval exists to prevent, which is the reason they are
+recorded rather than quietly fixed:
+
+1. Negative-control results were computed and written to disk but **never
+   printed or gated on**. The false positive above surfaced only from grepping
+   raw rows. A validator that under-measures silently is worse than none,
+   because it launders an unchecked assumption into a passing number.
+2. Cached rows written before the `subject` field existed made **`fox` vanish
+   from the per-subject breakdown** while the overall number stayed correct.
+   Cached rows are now backfilled, cache keys include the row tag, and a
+   requested subject with zero rows is an explicit FAIL rather than a skipped
+   line.
+
+### What this rubric still cannot see
+
+Rule 5 drops counts, so **count drift passes silently**. Courier reference image
+`ref_seed22001` has *two* cyan eyes where the canonical description specifies
+one -- a genuine consistency failure that scores as a pass. Read any Tier 0
+rubric number as "are the specified features present", not "is this the same
+individual". That gap is exactly what the embedding measure is for, and why the
+two are never averaged.

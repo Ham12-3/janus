@@ -8,7 +8,8 @@
 # These rules are measured, not guessed. See docs/m2/judge-validation.md: the
 # first version of this file scored 0.69 agreement with hand-labelled ground
 # truth, and two of its attributes were wrong on *every single image*. The
-# rewritten set below follows four rules derived from that measurement.
+# rewritten set below follows five rules derived from that measurement, and now
+# scores 63/63 on the per-subject sheets with a 17/18 negative-control rate.
 #
 # 1. ONE VISUAL FACT PER QUESTION. "a small red fox with a torn ear wearing
 #    goggles" bundles four facts; a 'no' tells you nothing about which failed.
@@ -60,8 +61,7 @@ subjects:
       a matte white boxy delivery robot the size of a suitcase, with a single
       round cyan glowing eye, six small black wheels, a bright orange stripe
       across its chest, and a short folded antenna on its left shoulder
-    # Rules applied, not yet validated -- this subject has no reference sheet to
-    # label against yet. Validate before trusting its numbers.
+    # Validated 16/16 against hand labels (2 rows abstained as ambiguous).
     attributes:
       - a white robot
       - a boxy robot
@@ -77,11 +77,11 @@ subjects:
       an elderly botanist with a short white beard and round tortoiseshell
       glasses, wearing a moss-green cardigan with brown leather elbow patches
       and a brass magnifying glass hanging on a chain around the neck
-    # Rules applied, not yet validated -- see note on `courier`.
+    # Validated 18/18 against hand labels.
     attributes:
       - an elderly person
       - a white beard
-      - round tortoiseshell glasses
+      - round brown glasses                     # was "round tortoiseshell glasses", 0/3
       - a green cardigan
       - leather elbow patches                  # was "...on the sleeves" (rule 2)
       - a magnifying glass                     # was "...hanging on a chain around the neck"

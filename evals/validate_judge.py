@@ -2,24 +2,24 @@
 
 Why this exists as a first-class eval rather than a one-off script: the whole
 project compares strategies using the attribute rubric, and an instrument that
-agrees with reality only 69% of the time cannot resolve the difference between
+agrees with reality only 43% of the time cannot resolve the difference between
 Tier 0 and Tier 2. The first version of ``configs/subjects.yaml`` was exactly
 that -- two of its six fox attributes were wrong on *every* image, because they
 used prepositional binding ("white stripes on the scarf") and a contrastive
-clause ("on the forehead rather than over the eyes").
+clause ("on the forehead rather than over the eyes"). See
+``docs/m2/judge-validation.md``.
 
 So attribute phrasings are not prose. They are part of the measuring apparatus,
 and they get regression-tested like any other part of it.
 
-Run it whenever ``configs/subjects.yaml`` attributes change:
-
-    python evals/validate_judge.py                      # validate current config
-    python evals/validate_judge.py --dtype bfloat16     # half the memory, ~4.2 GB
+    python evals/validate_judge.py                       # every labelled subject
+    python evals/validate_judge.py --subject courier,botanist
+    python evals/validate_judge.py --dtype bfloat16      # ~4.2 GB instead of ~8.4
     python evals/validate_judge.py --compare "a striped scarf=white stripes on the scarf"
 
 Results append to ``evals/judge_validation.jsonl`` after every question and are
-reused on restart, because a full pass costs about a minute per question on CPU
-and being killed part-way must not lose the work.
+reused on restart, because a full pass costs ~30 s per question on CPU and being
+killed part-way must not lose the work.
 """
 
 from __future__ import annotations
@@ -52,22 +52,26 @@ SUBJECTS_FILE = REPO_ROOT / "configs" / "subjects.yaml"
 MIN_AGREEMENT = 0.90
 
 
-def load_truth(path: Path) -> tuple[str, dict[str, dict[str, bool | None]]]:
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return data["subject"], data["images"]
+def load_truth(path: Path) -> tuple[dict, dict]:
+    """Return ({subject_id: {image: {attribute: label}}}, negative_controls)."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if "subjects" not in data:
+        raise SystemExit(
+            f"{path} must have a top-level 'subjects:' mapping of subject id -> images"
+        )
+    return data["subjects"], data.get("negative_controls", {})
 
 
 def check_keys_match_config(
-    truth: dict[str, dict[str, Any]], attributes: list[str], subject_id: str
+    images: dict[str, dict[str, Any]], attributes: list[str], subject_id: str
 ) -> None:
-    """Fail loudly if the ground-truth keys have drifted from the config.
+    """Fail loudly if ground-truth keys have drifted from the config.
 
-    Silent drift is the failure mode that would matter here: unlabelled
-    attributes would simply go unmeasured and the agreement number would look
-    fine while covering less than it claims.
+    Silent drift is the failure mode that matters: unlabelled attributes would
+    simply go unmeasured while the headline agreement still looked healthy.
     """
     configured = set(attributes)
-    for image, labels in truth.items():
+    for image, labels in images.items():
         labelled = set(labels)
         missing = configured - labelled
         extra = labelled - configured
@@ -80,7 +84,14 @@ def check_keys_match_config(
             )
 
 
-def load_done(dtype: str) -> dict[tuple[str, str], dict]:
+def load_done(dtype: str, image_to_subject: dict[str, str]) -> dict[tuple[str, str], dict]:
+    """Load cached answers, backfilling fields added after they were written.
+
+    Rows from an earlier schema have no ``subject``, which silently dropped a
+    whole subject out of the per-subject breakdown while the overall number
+    still looked right. Cached rows get the missing field filled in from the
+    ground truth rather than being trusted as-is.
+    """
     if not RESULTS_FILE.exists():
         return {}
     done = {}
@@ -88,8 +99,11 @@ def load_done(dtype: str) -> dict[tuple[str, str], dict]:
         if not line.strip():
             continue
         row = json.loads(line)
-        if row.get("dtype") == dtype:
-            done[(row["image"], row["attribute"])] = row
+        if row.get("dtype") != dtype:
+            continue
+        if "subject" not in row:
+            row["subject"] = image_to_subject.get(row["image"], "_unknown")
+        done[(row["image"], row["phrasing"], row.get("tag", "current"))] = row
     return done
 
 
@@ -103,7 +117,8 @@ def emit(row: dict) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dtype", default="float32", help="float32 | bfloat16 | float16")
-    parser.add_argument("--subjects", type=Path, default=SUBJECTS_FILE)
+    parser.add_argument("--subject", default=None, help="Comma-separated ids; default all labelled.")
+    parser.add_argument("--subjects-file", type=Path, default=SUBJECTS_FILE)
     parser.add_argument("--truth", type=Path, default=TRUTH_FILE)
     parser.add_argument(
         "--compare",
@@ -113,88 +128,175 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    subject_id, truth = load_truth(args.truth)
-    registry = SubjectRegistry.from_yaml(args.subjects)
-    subject = registry.get(subject_id)
-    check_keys_match_config(truth, subject.attributes, subject_id)
+    truth, negatives = load_truth(args.truth)
+    registry = SubjectRegistry.from_yaml(args.subjects_file)
+
+    wanted = args.subject.split(",") if args.subject else list(truth)
+    unknown = [s for s in wanted if s not in truth]
+    if unknown:
+        raise SystemExit(f"no ground truth for {unknown}; labelled subjects are {sorted(truth)}")
 
     alternatives = dict(pair.split("=", 1) for pair in args.compare)
     bundle = get_bundle(Settings(dtype=args.dtype, device="cpu"))
     cfg = UnderstandConfig(max_new_tokens=24, temperature=0.0)
-    done = load_done(args.dtype)
+    image_to_subject = {
+        image: sid for sid, images in truth.items() for image in images
+    }
+    done = load_done(args.dtype, image_to_subject)
 
     rows: list[dict] = []
-    for image_rel, labels in truth.items():
-        image_path = REPO_ROOT / image_rel
-        if not image_path.exists():
-            log.warning("image_missing", path=str(image_path))
-            continue
+    for subject_id in wanted:
+        subject = registry.get(subject_id)
+        images = truth[subject_id]
+        check_keys_match_config(images, subject.attributes, subject_id)
 
-        for attribute, label in labels.items():
-            for phrasing, tag in [(attribute, "current")] + (
-                [(alternatives[attribute], "alternative")] if attribute in alternatives else []
-            ):
-                cached = done.get((image_rel, phrasing))
+        for image_rel, labels in images.items():
+            image_path = REPO_ROOT / image_rel
+            if not image_path.exists():
+                log.warning("image_missing", path=str(image_path))
+                continue
+
+            for attribute, label in labels.items():
+                phrasings = [(attribute, "current")]
+                if attribute in alternatives:
+                    phrasings.append((alternatives[attribute], "alternative"))
+                for phrasing, tag in phrasings:
+                    cached = done.get((image_rel, phrasing, tag))
+                    if cached:
+                        rows.append(cached)
+                        continue
+                    verdict, answer = ask_yes_no(bundle, image_path, phrasing, cfg=cfg)
+                    row = {
+                        "dtype": args.dtype, "subject": subject_id, "image": image_rel,
+                        "attribute": attribute, "phrasing": phrasing, "tag": tag,
+                        "truth": label, "verdict": verdict, "raw": answer.text,
+                        "correct": None if label is None else (verdict == "yes") == bool(label),
+                    }
+                    emit(row)
+                    rows.append(row)
+                    mark = "--" if row["correct"] is None else ("ok" if row["correct"] else "XX")
+                    print(
+                        f"{mark} {subject_id:9} {Path(image_rel).stem:18} {phrasing:40} -> {verdict}",
+                        flush=True,
+                    )
+
+    negative_rows: list[dict] = []
+    if not args.subject:  # negative controls span subjects, so only on a full run
+        for image_rel, labels in negatives.items():
+            image_path = REPO_ROOT / image_rel
+            if not image_path.exists():
+                log.warning("image_missing", path=str(image_path))
+                continue
+            for attribute, label in labels.items():
+                cached = done.get((image_rel, attribute, "negative"))
                 if cached:
-                    rows.append(cached)
+                    negative_rows.append(cached)
                     continue
-                verdict, answer = ask_yes_no(bundle, image_path, phrasing, cfg=cfg)
+                verdict, answer = ask_yes_no(bundle, image_path, attribute, cfg=cfg)
                 row = {
-                    "dtype": args.dtype, "image": image_rel, "attribute": attribute,
-                    "phrasing": phrasing, "tag": tag, "truth": label,
-                    "verdict": verdict, "raw": answer.text,
-                    "correct": None if label is None else (verdict == "yes") == bool(label),
+                    "dtype": args.dtype, "subject": "_negative", "image": image_rel,
+                    "attribute": attribute, "phrasing": attribute, "tag": "negative",
+                    "truth": label, "verdict": verdict, "raw": answer.text,
+                    "correct": (verdict == "yes") == bool(label),
                 }
                 emit(row)
-                rows.append(row)
-                mark = "--" if row["correct"] is None else ("ok" if row["correct"] else "XX")
-                print(f"{mark} {Path(image_rel).stem:18} {phrasing:42} -> {verdict}", flush=True)
+                negative_rows.append(row)
+                mark = "ok" if row["correct"] else "XX"
+                print(
+                    f"{mark} NEGATIVE  {Path(image_rel).stem:18} {attribute:40} -> {verdict}",
+                    flush=True,
+                )
 
-    return report(rows, subject.attributes)
+    return report(rows, registry, wanted, negative_rows)
 
 
-def report(rows: list[dict], attributes: list[str]) -> int:
+def report(
+    rows: list[dict],
+    registry: SubjectRegistry,
+    wanted: list[str],
+    negative_rows: list[dict] | None = None,
+) -> int:
     scored = [r for r in rows if r["correct"] is not None and r["tag"] == "current"]
     if not scored:
         print("no scored rows")
         return 1
 
-    hits = sum(1 for r in scored if r["correct"])
-    agreement = hits / len(scored)
-    skipped = sum(1 for r in rows if r["correct"] is None)
-
     print("\n=== judge validation ===")
-    print(f"agreement: {hits}/{len(scored)} = {agreement:.3f}  (ambiguous, unscored: {skipped})")
-    print(f"\n{'attribute':45} {'correct':>9}")
-    failing = []
-    for attribute in attributes:
-        sub = [r for r in scored if r["attribute"] == attribute]
+    failed_subjects: list[tuple[str, float]] = []
+
+    for subject_id in wanted:
+        sub = [r for r in scored if r.get("subject") == subject_id]
         if not sub:
+            # A requested subject producing no rows means it silently went
+            # unmeasured -- the exact failure this eval exists to prevent, so it
+            # is an error rather than a skipped line.
+            print(f"\n[FAIL] {subject_id}: no scored rows. Unmeasured, not passing.")
+            failed_subjects.append((subject_id, 0.0))
             continue
-        good = sum(1 for r in sub if r["correct"])
-        print(f"{attribute:45} {good:>4}/{len(sub)}")
-        if good < len(sub):
-            failing.append((attribute, good, len(sub)))
+        hits = sum(1 for r in sub if r["correct"])
+        agreement = hits / len(sub)
+        skipped = sum(
+            1 for r in rows if r.get("subject") == subject_id and r["correct"] is None
+        )
+        flag = "PASS" if agreement >= MIN_AGREEMENT else "FAIL"
+        print(f"\n[{flag}] {subject_id}: {hits}/{len(sub)} = {agreement:.3f}"
+              f"  (ambiguous, unscored: {skipped})")
+
+        # Positive and negative cases separately: a judge that only ever sees
+        # attributes that ARE present is not characterised, because agreeing is
+        # its failure mode.
+        pos = [r for r in sub if r["truth"]]
+        neg = [r for r in sub if not r["truth"]]
+        if pos:
+            print(f"    present   {sum(1 for r in pos if r['correct'])}/{len(pos)}")
+        if neg:
+            print(f"    absent    {sum(1 for r in neg if r['correct'])}/{len(neg)}")
+        else:
+            print("    absent    none labelled -- false positives are untested here")
+
+        for attribute in registry.get(subject_id).attributes:
+            per = [r for r in sub if r["attribute"] == attribute]
+            if per and sum(1 for r in per if r["correct"]) < len(per):
+                good = sum(1 for r in per if r["correct"])
+                print(f"    unreadable: {attribute!r} {good}/{len(per)}")
+
+        if agreement < MIN_AGREEMENT:
+            failed_subjects.append((subject_id, agreement))
+
+    hits = sum(1 for r in scored if r["correct"])
+    overall = hits / len(scored)
+    print(f"\noverall (per-subject sheets): {hits}/{len(scored)} = {overall:.3f}")
+
+    negative_rows = negative_rows or []
+    if negative_rows:
+        neg_hits = sum(1 for r in negative_rows if r["correct"])
+        rate = neg_hits / len(negative_rows)
+        print(f"negative controls: {neg_hits}/{len(negative_rows)} = {rate:.3f}")
+        for r in negative_rows:
+            if not r["correct"]:
+                print(
+                    f"    FALSE POSITIVE  {Path(r['image']).stem}: "
+                    f"claimed {r['attribute']!r} is present"
+                )
+        if rate < MIN_AGREEMENT:
+            failed_subjects.append(("negative controls", rate))
+    else:
+        print("negative controls: NOT RUN -- false-positive rate is unmeasured")
 
     alt = [r for r in rows if r["tag"] == "alternative" and r["correct"] is not None]
     if alt:
         alt_hits = sum(1 for r in alt if r["correct"])
-        print(f"\nalternative phrasings: {alt_hits}/{len(alt)} = {alt_hits / len(alt):.3f}")
+        print(f"alternative phrasings: {alt_hits}/{len(alt)} = {alt_hits / len(alt):.3f}")
 
-    if failing:
-        print("\nattributes the judge cannot read reliably:")
-        for attribute, good, total in failing:
-            print(f"  {attribute!r}: {good}/{total}")
-        print("Rewrite them per the rules at the top of configs/subjects.yaml.")
-
-    if agreement < MIN_AGREEMENT:
-        print(
-            f"\nFAIL: agreement {agreement:.3f} is below {MIN_AGREEMENT}. "
-            "A rubric this noisy cannot resolve Tier 0 from Tier 2; fix the phrasings "
-            "before trusting any baseline built with it."
-        )
+    if failed_subjects:
+        print("\nFAIL: these subjects are below the threshold, so a baseline using them")
+        print("cannot be trusted to resolve one strategy from another:")
+        for subject_id, agreement in failed_subjects:
+            print(f"  {subject_id}: {agreement:.3f} < {MIN_AGREEMENT}")
+        print("Rewrite the named attributes per the rules in configs/subjects.yaml.")
         return 1
-    print(f"\nPASS: agreement {agreement:.3f} >= {MIN_AGREEMENT}")
+
+    print(f"\nPASS: every subject at or above {MIN_AGREEMENT}")
     return 0
 
 

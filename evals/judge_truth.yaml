@@ -8,47 +8,149 @@
 # an honest abstention, not a free pass. Keys must match the attribute strings
 # in configs/subjects.yaml exactly; the validator fails loudly if they drift.
 
-subject: fox
+subjects:
+  fox:
+    subjects/fox/refs/ref_seed11000.png:
+      a red fox: true
+      a fox with one torn or notched ear: false
+      a navy blue scarf: true
+      a striped scarf: true
+      brass-coloured goggles: true
+      goggles on top of the head: true
 
-images:
+    subjects/fox/refs/ref_seed11001.png:
+      a red fox: true
+      a fox with one torn or notched ear: false
+      a navy blue scarf: true
+      a striped scarf: true
+      brass-coloured goggles: true
+      goggles on top of the head: true
+
+    subjects/fox/refs/ref_seed11002.png:
+      a red fox: true
+      a fox with one torn or notched ear: false
+      a navy blue scarf: true
+      a striped scarf: true
+      brass-coloured goggles: true
+      # One lens sits over the eye rather than clear of it. A human would
+      # hesitate, so the judge is not scored on it.
+      goggles on top of the head: null
+
+    subjects/fox/refs/ref_seed11003.png:
+      a red fox: true
+      a fox with one torn or notched ear: false
+      a navy blue scarf: true
+      a striped scarf: true
+      brass-coloured goggles: true
+      goggles on top of the head: true
+
+    outputs/baseline/tier0/images/fox_00_seed12000.png:
+      a red fox: true
+      a fox with one torn or notched ear: false
+      a navy blue scarf: true
+      a striped scarf: true
+      brass-coloured goggles: true
+      goggles on top of the head: true
+
+  courier:
+    subjects/courier/refs/ref_seed22000.png:
+      a white robot: true
+      a boxy robot: true
+      a glowing cyan eye: true
+      small black wheels: true
+      an orange stripe: true
+      a thin antenna: true
+
+    subjects/courier/refs/ref_seed22001.png:
+      a white robot: true
+      a boxy robot: true
+      # Two cyan eyes rather than the one the canonical description specifies.
+      # The attribute asks only whether a glowing cyan eye is present, so it is
+      # true -- the count drift is a real consistency failure this rubric
+      # deliberately cannot see (see rule 5 in configs/subjects.yaml).
+      a glowing cyan eye: true
+      small black wheels: true
+      an orange stripe: true
+      # A short orange nub on top. Could be read as a stubby antenna or as a
+      # button; a human would hesitate.
+      a thin antenna: null
+
+    subjects/courier/refs/ref_seed22002.png:
+      a white robot: true
+      a boxy robot: true
+      # The lamp glows near-white with only a faint blue cast. Not clearly cyan.
+      a glowing cyan eye: null
+      small black wheels: true
+      an orange stripe: true
+      a thin antenna: true
+
+  botanist:
+    subjects/botanist/refs/ref_seed33000.png:
+      an elderly person: true
+      a white beard: true
+      round brown glasses: true
+      a green cardigan: true
+      leather elbow patches: true
+      a magnifying glass: true
+
+    subjects/botanist/refs/ref_seed33001.png:
+      an elderly person: true
+      a white beard: true
+      round brown glasses: true
+      a green cardigan: true
+      leather elbow patches: true
+      a magnifying glass: true
+
+    subjects/botanist/refs/ref_seed33002.png:
+      an elderly person: true
+      a white beard: true
+      round brown glasses: true
+      a green cardigan: true
+      leather elbow patches: true
+      a magnifying glass: true
+
+# ---------------------------------------------------------------------------
+# NEGATIVE CONTROLS
+#
+# Images paired with attributes belonging to a *different* subject, so every
+# label is false by construction.
+#
+# These exist because Tier 0's over-specified prompts reproduce most of what
+# they ask for, which makes the per-subject sheets above almost entirely
+# positive. A judge measured only on attributes that ARE present is not
+# characterised at all, since agreeing is its failure mode -- and the one false
+# positive found so far ("a damaged ear" on an undamaged ear) came from exactly
+# this blind spot.
+#
+# Cross-subject pairing costs nothing: the images already exist.
+# ---------------------------------------------------------------------------
+negative_controls:
+  subjects/courier/refs/ref_seed22000.png:
+    a red fox: false
+    a striped scarf: false
+    goggles on top of the head: false
+
+  subjects/botanist/refs/ref_seed33000.png:
+    a glowing cyan eye: false
+    small black wheels: false
+    a thin antenna: false
+
   subjects/fox/refs/ref_seed11000.png:
-    a red fox: true
-    a fox with one torn or notched ear: false
-    a navy blue scarf: true
-    a striped scarf: true
-    brass-coloured goggles: true
-    goggles on top of the head: true
+    a green cardigan: false
+    leather elbow patches: false
+    a magnifying glass: false
+
+  subjects/courier/refs/ref_seed22001.png:
+    a red fox: false
+    a navy blue scarf: false
+    a white beard: false
+
+  subjects/botanist/refs/ref_seed33001.png:
+    a white robot: false
+    an orange stripe: false
+    a striped scarf: false
 
   subjects/fox/refs/ref_seed11001.png:
-    a red fox: true
-    a fox with one torn or notched ear: false
-    a navy blue scarf: true
-    a striped scarf: true
-    brass-coloured goggles: true
-    goggles on top of the head: true
-
-  subjects/fox/refs/ref_seed11002.png:
-    a red fox: true
-    a fox with one torn or notched ear: false
-    a navy blue scarf: true
-    a striped scarf: true
-    brass-coloured goggles: true
-    # One lens sits over the eye rather than clear of it. A human would hesitate,
-    # so the judge is not scored on it.
-    goggles on top of the head: null
-
-  subjects/fox/refs/ref_seed11003.png:
-    a red fox: true
-    a fox with one torn or notched ear: false
-    a navy blue scarf: true
-    a striped scarf: true
-    brass-coloured goggles: true
-    goggles on top of the head: true
-
-  outputs/baseline/tier0/images/fox_00_seed12000.png:
-    a red fox: true
-    a fox with one torn or notched ear: false
-    a navy blue scarf: true
-    a striped scarf: true
-    brass-coloured goggles: true
-    goggles on top of the head: true
+    a boxy robot: false
+    round brown glasses: false
+    an elderly person: false
