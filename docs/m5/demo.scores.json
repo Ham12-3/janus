@@ -1,0 +1,405 @@
+{
+  "title": "The Fox Who Mapped the Weather",
+  "planner": "template",
+  "n_sections": 5,
+  "n_low_confidence": 1,
+  "meta": {
+    "model": {
+      "model_id": "deepseek-ai/Janus-Pro-1B",
+      "device": "cpu"
+    },
+    "note": "assembled from Tier 0 baseline images; not a pipeline run"
+  },
+  "sections": [
+    {
+      "heading": "1. Standing in a sunlit meadow of tall grass",
+      "outcome": {
+        "low_confidence": false,
+        "n_attempts": 1,
+        "chosen_seed": 12000,
+        "attempts": [
+          {
+            "seed": 12000,
+            "rubric_score": 0.8333,
+            "embedding_mean": 0.8691,
+            "accepted": true,
+            "seconds": 0.0
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "standing in a sunlit meadow of tall grass",
+          "seed": 12000,
+          "image_path": "outputs\\baseline\\tier0\\images\\fox_00_seed12000.png",
+          "rubric": {
+            "score": 0.8333,
+            "n_yes": 5,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.8691,
+            "best": 0.8738,
+            "worst": 0.8592,
+            "n_references": 4,
+            "per_reference": [
+              0.8722,
+              0.8711,
+              0.8592,
+              0.8738
+            ]
+          },
+          "meta": {
+            "strategy": "tier0",
+            "prompt": "standing in a sunlit meadow of tall grass. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead",
+            "scene_index": 0
+          }
+        }
+      }
+    },
+    {
+      "heading": "2. Walking along a rainy city street at night",
+      "outcome": {
+        "low_confidence": false,
+        "n_attempts": 1,
+        "chosen_seed": 12001,
+        "attempts": [
+          {
+            "seed": 12001,
+            "rubric_score": 0.8333,
+            "embedding_mean": 0.9023,
+            "accepted": true,
+            "seconds": 0.0
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "walking along a rainy city street at night",
+          "seed": 12001,
+          "image_path": "outputs\\baseline\\tier0\\images\\fox_01_seed12001.png",
+          "rubric": {
+            "score": 0.8333,
+            "n_yes": 5,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.9023,
+            "best": 0.9041,
+            "worst": 0.8999,
+            "n_references": 4,
+            "per_reference": [
+              0.9016,
+              0.9041,
+              0.8999,
+              0.9035
+            ]
+          },
+          "meta": {
+            "strategy": "tier0",
+            "prompt": "walking along a rainy city street at night. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead",
+            "scene_index": 1
+          }
+        }
+      }
+    },
+    {
+      "heading": "3. Sitting at a cluttered wooden workbench surrounded by tools",
+      "outcome": {
+        "low_confidence": true,
+        "n_attempts": 1,
+        "chosen_seed": 12002,
+        "attempts": [
+          {
+            "seed": 12002,
+            "rubric_score": 0.6667,
+            "embedding_mean": 0.8471,
+            "accepted": false,
+            "seconds": 0.0
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "sitting at a cluttered wooden workbench surrounded by tools",
+          "seed": 12002,
+          "image_path": "outputs\\baseline\\tier0\\images\\fox_02_seed12002.png",
+          "rubric": {
+            "score": 0.6667,
+            "n_yes": 4,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.8471,
+            "best": 0.8525,
+            "worst": 0.8385,
+            "n_references": 4,
+            "per_reference": [
+              0.8478,
+              0.8525,
+              0.8385,
+              0.8494
+            ]
+          },
+          "meta": {
+            "strategy": "tier0",
+            "prompt": "sitting at a cluttered wooden workbench surrounded by tools. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead",
+            "scene_index": 2
+          }
+        }
+      }
+    },
+    {
+      "heading": "4. On a rope bridge above a mountain stream",
+      "outcome": {
+        "low_confidence": false,
+        "n_attempts": 1,
+        "chosen_seed": 12003,
+        "attempts": [
+          {
+            "seed": 12003,
+            "rubric_score": 0.8333,
+            "embedding_mean": 0.903,
+            "accepted": true,
+            "seconds": 0.0
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "on a rope bridge above a mountain stream",
+          "seed": 12003,
+          "image_path": "outputs\\baseline\\tier0\\images\\fox_03_seed12003.png",
+          "rubric": {
+            "score": 0.8333,
+            "n_yes": 5,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.903,
+            "best": 0.9089,
+            "worst": 0.8931,
+            "n_references": 4,
+            "per_reference": [
+              0.9022,
+              0.9089,
+              0.8931,
+              0.9077
+            ]
+          },
+          "meta": {
+            "strategy": "tier0",
+            "prompt": "on a rope bridge above a mountain stream. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead",
+            "scene_index": 3
+          }
+        }
+      }
+    },
+    {
+      "heading": "5. In a narrow library aisle between tall bookshelves",
+      "outcome": {
+        "low_confidence": false,
+        "n_attempts": 1,
+        "chosen_seed": 12004,
+        "attempts": [
+          {
+            "seed": 12004,
+            "rubric_score": 1.0,
+            "embedding_mean": 0.8575,
+            "accepted": true,
+            "seconds": 0.0
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "in a narrow library aisle between tall bookshelves",
+          "seed": 12004,
+          "image_path": "outputs\\baseline\\tier0\\images\\fox_04_seed12004.png",
+          "rubric": {
+            "score": 1.0,
+            "n_yes": 6,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.8575,
+            "best": 0.8622,
+            "worst": 0.8488,
+            "n_references": 4,
+            "per_reference": [
+              0.8572,
+              0.8619,
+              0.8488,
+              0.8622
+            ]
+          },
+          "meta": {
+            "strategy": "tier0",
+            "prompt": "in a narrow library aisle between tall bookshelves. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead",
+            "scene_index": 4
+          }
+        }
+      }
+    }
+  ]
+}

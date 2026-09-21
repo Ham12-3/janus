@@ -1,0 +1,70 @@
+{
+  "title": "The Fox Who Mapped the Weather",
+  "topic": "a fox naturalist recording the weather across one year",
+  "subject_ids": [
+    "fox"
+  ],
+  "sections": [
+    {
+      "heading": "1. Standing in a sunlit meadow of tall grass",
+      "body": "The fox is shown standing in a sunlit meadow of tall grass. Every illustration in this document was generated from the same canonical description and the subject's fixed seed, which is the Tier 0 consistency strategy. The scores below the image are the measured result for this page, not an estimate.",
+      "image": {
+        "scene": "standing in a sunlit meadow of tall grass",
+        "framing": "medium shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 0
+      }
+    },
+    {
+      "heading": "2. Walking along a rainy city street at night",
+      "body": "The fox is shown walking along a rainy city street at night. Every illustration in this document was generated from the same canonical description and the subject's fixed seed, which is the Tier 0 consistency strategy. The scores below the image are the measured result for this page, not an estimate.",
+      "image": {
+        "scene": "walking along a rainy city street at night",
+        "framing": "medium shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 1
+      }
+    },
+    {
+      "heading": "3. Sitting at a cluttered wooden workbench surrounded by tools",
+      "body": "The fox is shown sitting at a cluttered wooden workbench surrounded by tools. Every illustration in this document was generated from the same canonical description and the subject's fixed seed, which is the Tier 0 consistency strategy. The scores below the image are the measured result for this page, not an estimate.",
+      "image": {
+        "scene": "sitting at a cluttered wooden workbench surrounded by tools",
+        "framing": "medium shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 2
+      }
+    },
+    {
+      "heading": "4. On a rope bridge above a mountain stream",
+      "body": "The fox is shown on a rope bridge above a mountain stream. Every illustration in this document was generated from the same canonical description and the subject's fixed seed, which is the Tier 0 consistency strategy. The scores below the image are the measured result for this page, not an estimate.",
+      "image": {
+        "scene": "on a rope bridge above a mountain stream",
+        "framing": "medium shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 3
+      }
+    },
+    {
+      "heading": "5. In a narrow library aisle between tall bookshelves",
+      "body": "The fox is shown in a narrow library aisle between tall bookshelves. Every illustration in this document was generated from the same canonical description and the subject's fixed seed, which is the Tier 0 consistency strategy. The scores below the image are the measured result for this page, not an estimate.",
+      "image": {
+        "scene": "in a narrow library aisle between tall bookshelves",
+        "framing": "medium shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 4
+      }
+    }
+  ],
+  "planner": "template"
+}

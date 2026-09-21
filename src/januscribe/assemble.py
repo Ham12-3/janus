@@ -208,7 +208,6 @@ def write_pdf(document: Document, path: str | Path, debug: bool = False) -> Path
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import mm
-        from reportlab.lib.utils import ImageReader
         from reportlab.platypus import (
             Image as RLImage,
             PageBreak,
@@ -251,8 +250,13 @@ def write_pdf(document: Document, path: str | Path, debug: bool = False) -> Path
             buffer = io.BytesIO()
             rendered.image.save(buffer, format="PNG")
             buffer.seek(0)
-            side = min(doc.width, 110 * mm)
-            flow.append(RLImage(ImageReader(buffer), width=side, height=side))
+            # reportlab's Image flowable takes a path or a file-like object, not
+            # an ImageReader. Width is capped to the frame; height follows the
+            # image's own aspect ratio so non-square art is not distorted.
+            width = min(doc.width, 110 * mm)
+            src_w, src_h = rendered.image.size
+            height = width * (src_h / src_w) if src_w else width
+            flow.append(RLImage(buffer, width=width, height=height))
             flow.append(Spacer(1, 6))
         flow.append(Paragraph(html.escape(rendered.section.body), styles["BodyText"]))
         if debug and rendered.outcome:
