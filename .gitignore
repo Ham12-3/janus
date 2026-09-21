@@ -9,3 +9,6 @@ __pycache__/
 subjects/
 evals/judge_validation.jsonl
 tokens/
+adapters/
+dist/
+*.log
