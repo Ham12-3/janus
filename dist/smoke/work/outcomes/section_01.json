@@ -1,0 +1,70 @@
+{
+  "low_confidence": true,
+  "n_attempts": 1,
+  "chosen_seed": 12001,
+  "attempts": [
+    {
+      "seed": 12001,
+      "rubric_score": 0.6667,
+      "embedding_mean": 0.8931,
+      "accepted": false,
+      "seconds": 357.5
+    }
+  ],
+  "report": {
+    "subject_id": "fox",
+    "scene": "walking along a rainy city street at night, medium shot",
+    "seed": 12001,
+    "image_path": null,
+    "rubric": {
+      "score": 0.6667,
+      "n_yes": 4,
+      "n_total": 6,
+      "n_unclear": 0,
+      "verdicts": [
+        {
+          "attribute": "a red fox",
+          "verdict": "no",
+          "raw_answer": "No."
+        },
+        {
+          "attribute": "a fox with one torn or notched ear",
+          "verdict": "no",
+          "raw_answer": "No."
+        },
+        {
+          "attribute": "a navy blue scarf",
+          "verdict": "yes",
+          "raw_answer": "Yes."
+        },
+        {
+          "attribute": "a striped scarf",
+          "verdict": "yes",
+          "raw_answer": "Yes."
+        },
+        {
+          "attribute": "brass-coloured goggles",
+          "verdict": "yes",
+          "raw_answer": "Yes."
+        },
+        {
+          "attribute": "goggles on top of the head",
+          "verdict": "yes",
+          "raw_answer": "Yes."
+        }
+      ]
+    },
+    "embedding": {
+      "mean": 0.8931,
+      "best": 0.897,
+      "worst": 0.8903,
+      "n_references": 4,
+      "per_reference": [
+        0.8903,
+        0.8943,
+        0.8909,
+        0.897
+      ]
+    }
+  }
+}

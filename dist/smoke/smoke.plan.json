@@ -1,0 +1,34 @@
+{
+  "title": "Smoke Build",
+  "topic": "a fox naturalist recording the weather",
+  "subject_ids": [
+    "fox"
+  ],
+  "sections": [
+    {
+      "heading": "1. Standing in a sunlit meadow of tall grass",
+      "body": "This part of a fox naturalist recording the weather follows fox standing in a sunlit meadow of tall grass. Here fox is shown as a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead. The illustration beside this text was generated for this section alone.",
+      "image": {
+        "scene": "standing in a sunlit meadow of tall grass",
+        "framing": "wide establishing shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 0
+      }
+    },
+    {
+      "heading": "2. Walking along a rainy city street at night",
+      "body": "This part of a fox naturalist recording the weather follows fox walking along a rainy city street at night. Here fox is shown as a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead. The illustration beside this text was generated for this section alone.",
+      "image": {
+        "scene": "walking along a rainy city street at night",
+        "framing": "medium shot",
+        "subject_ids": [
+          "fox"
+        ],
+        "seed_index": 1
+      }
+    }
+  ],
+  "planner": "template"
+}

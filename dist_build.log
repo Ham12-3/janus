@@ -1,0 +1,22 @@
+Python version is above 3.10, patching the collections module.
+C:\Users\mobol\Downloads\janus\.venv\Lib\site-packages\transformers\models\auto\image_processing_auto.py:517: FutureWarning: The image_processor_class argument is deprecated and will be removed in v4.42. Please use `slow_image_processor_class`, or `fast_image_processor_class` instead
+  warnings.warn(
+18:16:33 [info     ] loading_model                  attn_implementation=sdpa device=cpu dtype=torch.float32 model_id=deepseek-ai/Janus-Pro-1B
+You are using the default legacy behaviour of the <class 'transformers.models.llama.tokenization_llama_fast.LlamaTokenizerFast'>. This is expected, and simply means that the `legacy` (previous) behavior will be used so nothing changes for you. If you want to use the new behaviour, set `legacy=False`. This should only be set if you understand what it means, and thoroughly read the reason why this was added as explained in https://github.com/huggingface/transformers/pull/24565 - if you loaded a llama tokenizer from a GGUF file you can ignore this message.
+Some kwargs in processor config are unused and will not have any effect: add_special_token, num_image_tokens, image_tag, ignore_id, sft_format, mask_prompt. 
+18:16:50 [info     ] model_loaded                   codebook_embed_dim=8 device=cpu dtype=torch.float32 image_token_size=16384 lm_hidden_size=2048 lm_vocab_size=102400 model_id=deepseek-ai/Janus-Pro-1B params_total=2089232011 seconds=16.9 vq_dtype=torch.float32
+18:16:50 [info     ] plan_built                     images=4 planner=template sections=4 subjects=['fox']
+18:17:05 [info     ] reference_embedded             n=4 subject=fox
+18:17:05 [info     ] build_start                    images=4 max_attempts=2 out=dist sections=4 strategy=tier0 title='The Fox Who Mapped the Weather'
+18:17:05 [info     ] generation_start               cfg_weight=5.0 parallel_size=1 prompt='standing in a sunlit meadow of tall grass, wide establishing shot. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead' prompt_tokens=50 seed=12000 temperature=1.0
+18:20:28 [info     ] generation_done                parallel_size=1 seconds=202.4 seconds_per_image=202.4
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+18:20:45 [info     ] understand_answer              answer=Yes. do_sample=False n_images=1 question="Look at the image. Does it show: a red fox? Answer with exactly one word, 'yes' or 'no'."
+18:21:03 [info     ] understand_answer              answer=No. do_sample=False n_images=1 question="Look at the image. Does it show: a fox with one torn or notched ear? Answer with exactly one word, 'yes' or 'no'."
+18:21:22 [info     ] understand_answer              answer=Yes. do_sample=False n_images=1 question="Look at the image. Does it show: a navy blue scarf? Answer with exactly one word, 'yes' or 'no'."
+18:21:40 [info     ] understand_answer              answer=Yes. do_sample=False n_images=1 question="Look at the image. Does it show: a striped scarf? Answer with exactly one word, 'yes' or 'no'."
+18:22:13 [info     ] understand_answer              answer=No. do_sample=False n_images=1 question="Look at the image. Does it show: brass-coloured goggles? Answer with exactly one word, 'yes' or 'no'."
+18:22:31 [info     ] understand_answer              answer=Yes. do_sample=False n_images=1 question="Look at the image. Does it show: goggles on top of the head? Answer with exactly one word, 'yes' or 'no'."
+18:22:31 [info     ] rubric_scored                  n_total=6 n_unclear=0 n_yes=4 score=0.667 subject=fox
+18:22:34 [info     ] retry_attempt                  accepted=False attempt=1 embedding=0.837 of=2 rubric=0.667 seed=12000 subject=fox
+18:22:34 [info     ] generation_start               cfg_weight=5.0 parallel_size=1 prompt='standing in a sunlit meadow of tall grass, wide establishing shot. a small red fox with one torn left ear, wearing a navy blue scarf with white stripes and round brass goggles pushed up on its forehead' prompt_tokens=50 seed=112000 temperature=1.0

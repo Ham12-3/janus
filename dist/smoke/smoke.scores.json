@@ -1,0 +1,176 @@
+{
+  "title": "Smoke Build",
+  "planner": "template",
+  "n_sections": 2,
+  "n_low_confidence": 1,
+  "meta": {
+    "model": {
+      "model_id": "deepseek-ai/Janus-Pro-1B",
+      "device": "cpu",
+      "dtype": "torch.float32",
+      "vq_dtype": "torch.float32",
+      "params_total": 2085607051,
+      "image_token_size": 16384,
+      "codebook_embed_dim": 8,
+      "lm_vocab_size": 100591,
+      "lm_hidden_size": 2048
+    },
+    "strategy": "tier0",
+    "retry_policy": {
+      "max_attempts": 1,
+      "metric": "rubric",
+      "rubric_threshold": 0.75,
+      "embedding_threshold": 0.85,
+      "seed_stride": 100000
+    },
+    "seconds_total": 775.0
+  },
+  "sections": [
+    {
+      "heading": "1. Standing in a sunlit meadow of tall grass",
+      "outcome": {
+        "low_confidence": false,
+        "n_attempts": 1,
+        "chosen_seed": 12000,
+        "attempts": [
+          {
+            "seed": 12000,
+            "rubric_score": 0.8333,
+            "embedding_mean": 0.914,
+            "accepted": true,
+            "seconds": 417.5
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "standing in a sunlit meadow of tall grass, wide establishing shot",
+          "seed": 12000,
+          "image_path": null,
+          "rubric": {
+            "score": 0.8333,
+            "n_yes": 5,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.914,
+            "best": 0.9173,
+            "worst": 0.9083,
+            "n_references": 4,
+            "per_reference": [
+              0.914,
+              0.9162,
+              0.9083,
+              0.9173
+            ]
+          }
+        }
+      }
+    },
+    {
+      "heading": "2. Walking along a rainy city street at night",
+      "outcome": {
+        "low_confidence": true,
+        "n_attempts": 1,
+        "chosen_seed": 12001,
+        "attempts": [
+          {
+            "seed": 12001,
+            "rubric_score": 0.6667,
+            "embedding_mean": 0.8931,
+            "accepted": false,
+            "seconds": 357.5
+          }
+        ],
+        "report": {
+          "subject_id": "fox",
+          "scene": "walking along a rainy city street at night, medium shot",
+          "seed": 12001,
+          "image_path": null,
+          "rubric": {
+            "score": 0.6667,
+            "n_yes": 4,
+            "n_total": 6,
+            "n_unclear": 0,
+            "verdicts": [
+              {
+                "attribute": "a red fox",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a fox with one torn or notched ear",
+                "verdict": "no",
+                "raw_answer": "No."
+              },
+              {
+                "attribute": "a navy blue scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "a striped scarf",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "brass-coloured goggles",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              },
+              {
+                "attribute": "goggles on top of the head",
+                "verdict": "yes",
+                "raw_answer": "Yes."
+              }
+            ]
+          },
+          "embedding": {
+            "mean": 0.8931,
+            "best": 0.897,
+            "worst": 0.8903,
+            "n_references": 4,
+            "per_reference": [
+              0.8903,
+              0.8943,
+              0.8909,
+              0.897
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

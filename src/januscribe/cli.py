@@ -395,6 +395,33 @@ def build(
 
 
 @app.command()
+def serve(
+    host: Annotated[str, typer.Option("--host", help="Bind address. Localhost by default.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port")] = 8000,
+    warm: Annotated[
+        bool, typer.Option("--warm/--no-warm", help="Load the model before accepting requests.")
+    ] = True,
+) -> None:
+    """Run the local web app. `januscribe serve` then open http://127.0.0.1:8000
+
+    The model is loaded once and held for the process's life, so builds no
+    longer pay the load cost per command. Local only: there is no
+    authentication, so do not bind this to a public address.
+    """
+    from januscribe.server import create_app
+
+    import uvicorn
+
+    settings = _settings()
+    application = create_app(settings)
+    if warm:
+        typer.echo("loading model (about 30s on this machine)...")
+        application.state.service.warm()
+    typer.echo(f"JanusScribe running at http://{host}:{port}")
+    uvicorn.run(application, host=host, port=port, log_level="warning")
+
+
+@app.command()
 def repl() -> None:
     """Load the model once, then run many commands against it.
 
