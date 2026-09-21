@@ -1,0 +1,29 @@
+# The full 20-scene grid from the brief. Runs take the first N via --scenes,
+# so a reduced run and the full run draw from the same ordered list and stay
+# comparable. Never reorder this file -- append instead.
+#
+# Scenes vary lighting, setting, framing and indoor/outdoor deliberately, and
+# are written to be subject-agnostic so the same list works for an animal, a
+# product and a person.
+
+scenes:
+  - standing in a sunlit meadow of tall grass
+  - walking along a rainy city street at night
+  - sitting at a cluttered wooden workbench surrounded by tools
+  - on a rope bridge above a mountain stream
+  - in a narrow library aisle between tall bookshelves
+  - on a sandy beach at sunset
+  - inside a humid greenhouse full of ferns
+  - waiting on a busy train station platform
+  - in a snow-covered pine forest
+  - on a rooftop overlooking a city skyline at dusk
+  - beside a crackling campfire at night
+  - in a cluttered attic lit by one dusty window
+  - crossing a desert dune under the midday sun
+  - in a bright modern kitchen
+  - on a small wooden boat on a calm lake
+  - in a neon-lit arcade
+  - under a large oak tree in autumn
+  - in a plain white photography studio
+  - walking through a narrow cobblestone alley
+  - on a grassy hilltop under heavy storm clouds

@@ -139,8 +139,11 @@ src/januscribe/
   generate.py    text to image: CFG sampling, seeds, batched parallel_size
   understand.py  image plus question to text, plus strict yes/no parsing
   vq.py          image <-> 576 VQ tokens, with PSNR
+  subjects.py    Subject registry: canonical description, attributes, seeds, refs
+  consistency.py attribute rubric + SigLIP similarity, reported separately
+  baseline.py    resumable Tier 0 runner behind a pluggable PromptStrategy
   cli.py         typer CLI
-configs/         default.yaml (1B, auto device), cuda-7b.yaml (production)
+configs/         default.yaml, cuda-7b.yaml, subjects.yaml, scenes.yaml
 tests/           fast unit tests plus slow model-backed tests
 NOTES-API.md     the verified Janus-Pro API surface
 ```

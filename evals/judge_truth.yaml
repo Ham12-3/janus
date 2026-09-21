@@ -1,0 +1,54 @@
+# Hand-labelled ground truth for the rubric judge.
+#
+# Every label here was set by looking at the image. This file is the only thing
+# in the project that is not derived from a model, which is precisely why it can
+# be used to measure one.
+#
+# `null` means genuinely ambiguous to a human and is excluded from scoring --
+# an honest abstention, not a free pass. Keys must match the attribute strings
+# in configs/subjects.yaml exactly; the validator fails loudly if they drift.
+
+subject: fox
+
+images:
+  subjects/fox/refs/ref_seed11000.png:
+    a red fox: true
+    a fox with one torn or notched ear: false
+    a navy blue scarf: true
+    a striped scarf: true
+    brass-coloured goggles: true
+    goggles on top of the head: true
+
+  subjects/fox/refs/ref_seed11001.png:
+    a red fox: true
+    a fox with one torn or notched ear: false
+    a navy blue scarf: true
+    a striped scarf: true
+    brass-coloured goggles: true
+    goggles on top of the head: true
+
+  subjects/fox/refs/ref_seed11002.png:
+    a red fox: true
+    a fox with one torn or notched ear: false
+    a navy blue scarf: true
+    a striped scarf: true
+    brass-coloured goggles: true
+    # One lens sits over the eye rather than clear of it. A human would hesitate,
+    # so the judge is not scored on it.
+    goggles on top of the head: null
+
+  subjects/fox/refs/ref_seed11003.png:
+    a red fox: true
+    a fox with one torn or notched ear: false
+    a navy blue scarf: true
+    a striped scarf: true
+    brass-coloured goggles: true
+    goggles on top of the head: true
+
+  outputs/baseline/tier0/images/fox_00_seed12000.png:
+    a red fox: true
+    a fox with one torn or notched ear: false
+    a navy blue scarf: true
+    a striped scarf: true
+    brass-coloured goggles: true
+    goggles on top of the head: true

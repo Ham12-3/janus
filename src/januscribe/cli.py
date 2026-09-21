@@ -188,6 +188,94 @@ def vq_roundtrip(
     typer.echo(f"{path}  psnr={result.psnr:.2f} dB  tokens={result.n_tokens}")
 
 
+@app.command("subjects")
+def subjects_cmd(
+    registry: Annotated[Path, typer.Option("--registry", exists=True)] = Path(
+        "configs/subjects.yaml"
+    ),
+) -> None:
+    """List the subject registry: prompts, seeds, attributes, reference sheets."""
+    from januscribe.subjects import SubjectRegistry
+
+    reg = SubjectRegistry.from_yaml(registry)
+    for subject in reg:
+        refs = subject.reference_paths(reg.root)
+        typer.echo(f"{subject.id}  (noun={subject.noun}, base_seed={subject.base_seed})")
+        typer.echo(f"  canonical: {subject.canonical_description}")
+        typer.echo(f"  refs: {len(refs)} in {subject.reference_dir(reg.root)}")
+        for attribute in subject.attributes:
+            typer.echo(f"    - {attribute}")
+
+
+@app.command("build-refs")
+def build_refs(
+    subject_ids: Annotated[
+        Optional[str], typer.Option("--subject", help="Comma-separated ids; default all.")
+    ] = None,
+    registry: Annotated[Path, typer.Option("--registry", exists=True)] = Path(
+        "configs/subjects.yaml"
+    ),
+    n: Annotated[int, typer.Option("--n", help="Reference images per subject.")] = 4,
+    force: Annotated[bool, typer.Option("--force/--no-force")] = False,
+) -> None:
+    """Generate each subject's reference sheet from its canonical description."""
+    from januscribe.baseline import build_reference_sheet
+    from januscribe.subjects import SubjectRegistry
+
+    bundle = _bundle()
+    reg = SubjectRegistry.from_yaml(registry)
+    chosen = reg.select(subject_ids.split(",") if subject_ids else None)
+    for subject in chosen:
+        paths = build_reference_sheet(
+            bundle, subject, reg.root, n, cfg=_settings().generation, force=force
+        )
+        for path in paths:
+            typer.echo(str(path))
+
+
+@app.command()
+def baseline(
+    scenes: Annotated[
+        Optional[int], typer.Option("--scenes", help="Use the first N scenes; default all.")
+    ] = None,
+    subject_ids: Annotated[
+        Optional[str], typer.Option("--subject", help="Comma-separated ids; default all.")
+    ] = None,
+    registry: Annotated[Path, typer.Option("--registry", exists=True)] = Path(
+        "configs/subjects.yaml"
+    ),
+    scene_file: Annotated[Path, typer.Option("--scene-file", exists=True)] = Path(
+        "configs/scenes.yaml"
+    ),
+    n_refs: Annotated[int, typer.Option("--refs")] = 4,
+    out: Annotated[Path, typer.Option("--out")] = Path("outputs/baseline/tier0"),
+    force: Annotated[bool, typer.Option("--force/--no-force", help="Ignore cached work.")] = False,
+) -> None:
+    """Run the Tier 0 consistency baseline over subjects x scenes.
+
+    Resumable: images and scores already on disk are reused unless --force.
+    """
+    from januscribe.baseline import Tier0Strategy, run_baseline, write_report
+    from januscribe.subjects import SubjectRegistry, load_scenes
+
+    bundle = _bundle()
+    settings = _settings()
+    reg = SubjectRegistry.from_yaml(registry)
+    chosen = reg.select(subject_ids.split(",") if subject_ids else None)
+    all_scenes = load_scenes(scene_file)
+    scene_list = load_scenes(scene_file, limit=scenes)
+
+    result = run_baseline(
+        bundle, reg, chosen, scene_list, out,
+        strategy=Tier0Strategy(), n_refs=n_refs,
+        gen_cfg=settings.generation, und_cfg=settings.understand, force=force,
+        n_scenes_available=len(all_scenes),
+    )
+    json_path, md_path = write_report(result, chosen, out)
+    typer.echo(str(json_path))
+    typer.echo(str(md_path))
+
+
 @app.command()
 def repl() -> None:
     """Load the model once, then run many commands against it.
@@ -198,7 +286,10 @@ def repl() -> None:
     """
     bundle = _bundle()
     typer.echo(json.dumps(bundle.describe(), indent=2))
-    typer.echo("model held in memory. commands: gen | ask | vq-roundtrip | info | quit")
+    typer.echo(
+        "model held in memory. commands: gen | ask | vq-roundtrip | subjects | "
+        "build-refs | baseline | info | quit"
+    )
     _STATE["locked"] = True  # keep the settings (and therefore the loaded model) fixed
     while True:
         try:

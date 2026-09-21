@@ -1,0 +1,87 @@
+# Three subjects covering the document types in scope: a storybook character,
+# a product, and a person. Canonical descriptions are deliberately
+# over-specified -- Tier 0 has nothing but the prompt to work with.
+#
+# ---------------------------------------------------------------------------
+# HOW TO WRITE AN ATTRIBUTE
+#
+# These rules are measured, not guessed. See docs/m2/judge-validation.md: the
+# first version of this file scored 0.69 agreement with hand-labelled ground
+# truth, and two of its attributes were wrong on *every single image*. The
+# rewritten set below follows four rules derived from that measurement.
+#
+# 1. ONE VISUAL FACT PER QUESTION. "a small red fox with a torn ear wearing
+#    goggles" bundles four facts; a 'no' tells you nothing about which failed.
+#
+# 2. NO PREPOSITIONAL BINDING TO A SECOND OBJECT. This is the big one.
+#      "white stripes ON THE SCARF"        -> 0/3 correct
+#      "a striped scarf"                   -> 3/3 correct
+#    Fold the relationship into the head noun instead of crossing a preposition.
+#
+# 3. NO CONTRASTIVE OR NEGATED CLAUSES.
+#      "goggles resting on the forehead RATHER THAN over the eyes" -> 0/2
+#      "goggles on top of the head"                                -> 2/2
+#
+# 4. STAY SPECIFIC ENOUGH TO BE FALSIFIABLE. Simplifying is not uniformly safe:
+#      "a fox with one torn or notched ear" -> 3/3 (correctly says no)
+#      "a damaged ear"                      -> 2/3 (false POSITIVE on an
+#                                                   undamaged ear)
+#    Vague questions do not get truer answers, they get agreeable ones. Rules 2
+#    and 4 pull against each other; that tension is why this needed measuring.
+#
+# 5. NO COUNTS. "six small black wheels" asks the judge to count, which a 1B VLM
+#    does not do reliably. A count that cannot be measured is noise in the
+#    rubric, not signal, so it stays in the canonical description (where it
+#    steers generation) and out of the attribute list (where it would be scored).
+# ---------------------------------------------------------------------------
+
+root: subjects
+
+subjects:
+  - id: fox
+    noun: fox
+    base_seed: 11000
+    canonical_description: >-
+      a small red fox with one torn left ear, wearing a navy blue scarf with
+      white stripes and round brass goggles pushed up on its forehead
+    # Every phrasing here is a measured form from the fox validation set.
+    attributes:
+      - a red fox                              # 3/3
+      - a fox with one torn or notched ear     # 3/3, incl. correct 'no'
+      - a navy blue scarf                      # 3/3
+      - a striped scarf                        # 3/3 (was "white stripes on the scarf", 0/3)
+      - brass-coloured goggles                 # was "round brass-coloured goggles", 2/3
+      - goggles on top of the head             # 3/3 (was "...rather than over the eyes", 0/2)
+
+  - id: courier
+    noun: robot
+    base_seed: 22000
+    canonical_description: >-
+      a matte white boxy delivery robot the size of a suitcase, with a single
+      round cyan glowing eye, six small black wheels, a bright orange stripe
+      across its chest, and a short folded antenna on its left shoulder
+    # Rules applied, not yet validated -- this subject has no reference sheet to
+    # label against yet. Validate before trusting its numbers.
+    attributes:
+      - a white robot
+      - a boxy robot
+      - a glowing cyan eye                     # was "a single round glowing cyan eye"
+      - small black wheels                     # count dropped, see rule 5
+      - an orange stripe                       # was "...across the chest" (rule 2)
+      - a thin antenna                         # was "...on one shoulder" (rule 2)
+
+  - id: botanist
+    noun: botanist
+    base_seed: 33000
+    canonical_description: >-
+      an elderly botanist with a short white beard and round tortoiseshell
+      glasses, wearing a moss-green cardigan with brown leather elbow patches
+      and a brass magnifying glass hanging on a chain around the neck
+    # Rules applied, not yet validated -- see note on `courier`.
+    attributes:
+      - an elderly person
+      - a white beard
+      - round tortoiseshell glasses
+      - a green cardigan
+      - leather elbow patches                  # was "...on the sleeves" (rule 2)
+      - a magnifying glass                     # was "...hanging on a chain around the neck"
